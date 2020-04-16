@@ -2,13 +2,14 @@
 
 const fs = require("fs");
 const fsp = fs.promises;
+const ora = require("ora");
 const axios = require("axios");
 const faker = require("faker");
 faker.locale = "zh_CN";
 const parse = require("node-html-parser").parse;
 const utils = require("./utils");
 
-require('dotenv').config()
+require("dotenv").config();
 
 const citySavePath = "city.json";
 
@@ -20,9 +21,7 @@ async function getCity() {
 }
 
 async function getCityCode() {
-
     if (!fs.existsSync(citySavePath)) {
-        console.log(123)
         await getCity();
     }
 
@@ -49,6 +48,8 @@ async function getCityJob() {
 
     let jobs = [];
     let page = 1;
+    const spinner = ora("Loading...");
+    spinner.start();
     while (true) {
         let res = await axios.get("https://www.zhipin.com/mobile/jobs.json", {
             headers: {
@@ -84,6 +85,7 @@ async function getCityJob() {
         page++;
         utils.msleep(200);
     }
+    spinner.stop();
     return jobs;
 }
 
