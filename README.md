@@ -6,6 +6,6 @@ Crawlers ideas inspire [ECommerceCrawlers](https://github.com/DropsDevopsOrg/ECo
 
 - [ ] Support Crawlers Job Details
 - [ ] Support blacklist
-- [ ] Support Multi Query Keyworkd
+- [x] Support Multi Query Keyword
 - [ ] Support Other Job Website
 - [ ] Support Web / Email

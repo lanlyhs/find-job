@@ -43,20 +43,17 @@ async function getCityCode() {
     return cityCode;
 }
 
-async function getCityJob() {
-    let cityCode = await getCityCode();
+async function getKeywordJob(cityCode, keyword) {
 
     let jobs = [];
     let page = 1;
-    const spinner = ora("Loading...");
-    spinner.start();
     while (true) {
         let res = await axios.get("https://www.zhipin.com/mobile/jobs.json", {
             headers: {
                 "User-Agent": faker.internet.userAgent(),
             },
             params: {
-                query: process.env.QUERY_KEYWORD,
+                query: keyword,
                 page: page,
                 city: cityCode,
             },
@@ -71,25 +68,40 @@ async function getCityJob() {
         const root = parse(code);
         for (let job of root.querySelectorAll("li.item")) {
             jobs.push({
-                职位名称: job.querySelector("div.title h4").text,
-                职位链接:
-                    "https://www.zhipin.com" +
-                    job.querySelector("a").getAttribute("href"),
-                公司名称: job.querySelector("div.name").text,
-                薪资: job.querySelector("div.title .salary").text,
+                "职位名称": job.querySelector("div.title h4").text,
+                "职位链接": "https://www.zhipin.com" + job.querySelector("a").getAttribute("href"),
+                "公司名称": job.querySelector("div.name").text,
+                "薪资": job.querySelector("div.title .salary").text,
                 // "工作地点": job.querySelectorAll('div.msg em')[0].text,
-                工作经验: job.querySelectorAll("div.msg em")[1].text,
-                学历要求: job.querySelectorAll("div.msg em")[2].text,
+                "工作经验": job.querySelectorAll("div.msg em")[1].text,
+                "学历要求": job.querySelectorAll("div.msg em")[2].text,
             });
         }
+
+        if (page > process.env.QUERY_PAGE) {
+            break;
+        }
+
         page++;
         utils.msleep(200);
     }
+    return jobs
+}
+
+async function getCityJob() {
+    let cityCode = await getCityCode();
+    let promises = process.env.QUERY_KEYWORD.split(",").map(k => getKeywordJob(cityCode, k));
+
+    const spinner = ora("Loading...");
+    spinner.start();
+    let allJobs = await Promise.all(promises);
     spinner.stop();
-    return jobs;
+    return allJobs;
 }
 
 (async function () {
     let jobs = await getCityJob();
-    console.table(jobs);
+    jobs.forEach(j => {
+        console.table(j);
+    })
 })();
