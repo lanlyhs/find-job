@@ -1,6 +1,7 @@
 "use strict";
 
-const fs = require("fs").promises;
+const fs = require("fs");
+const fsp = fs.promises;
 const axios = require("axios");
 const faker = require("faker");
 faker.locale = "zh_CN";
@@ -15,14 +16,17 @@ async function getCity() {
     let res = await axios.get(
         "https://www.zhipin.com/wapi/zpCommon/data/city.json"
     );
-    await fs.writeFile(citySavePath, JSON.stringify(res.data), "utf8");
+    await fsp.writeFile(citySavePath, JSON.stringify(res.data), "utf8");
 }
 
 async function getCityCode() {
 
-    await getCity();
+    if (!fs.existsSync(citySavePath)) {
+        console.log(123)
+        await getCity();
+    }
 
-    let city = await fs.readFile(citySavePath, "utf8");
+    let city = await fsp.readFile(citySavePath, "utf8");
     city = JSON.parse(city);
     let hotCityList = city.zpData.hotCityList;
 
