@@ -12,6 +12,7 @@ const utils = require("./utils");
 require("dotenv").config();
 
 const citySavePath = "city.json";
+const spinner = ora("Loading...");
 
 async function getCity() {
     let res = await axios.get(
@@ -95,14 +96,15 @@ async function getCityJob() {
     return allJobs;
 }
 
-(async function () {
-    const spinner = ora("Loading...");
-    spinner.start();
-
-    let jobs = await getCityJob();
-
+async function wrapperSpinner(f) {
+    spinner.start()
+    let r = await f()
     spinner.stop();
+    return r
+}
 
+(async function () {
+    let jobs = await wrapperSpinner(getCityJob);
     jobs.forEach(j => {
         console.table(j);
     })
