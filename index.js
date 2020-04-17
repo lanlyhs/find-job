@@ -74,7 +74,7 @@ async function getKeywordJob(cityCode, keyword) {
                 "薪资": job.querySelector("div.title .salary").text,
                 // "工作地点": job.querySelectorAll('div.msg em')[0].text,
                 "工作经验": job.querySelectorAll("div.msg em")[1].text,
-                "学历要求": job.querySelectorAll("div.msg em")[2].text,
+                // "学历要求": job.querySelectorAll("div.msg em")[2].text,
             });
         }
 
@@ -91,16 +91,18 @@ async function getKeywordJob(cityCode, keyword) {
 async function getCityJob() {
     let cityCode = await getCityCode();
     let promises = process.env.QUERY_KEYWORD.split(",").map(k => getKeywordJob(cityCode, k));
-
-    const spinner = ora("Loading...");
-    spinner.start();
     let allJobs = await Promise.all(promises);
-    spinner.stop();
     return allJobs;
 }
 
 (async function () {
+    const spinner = ora("Loading...");
+    spinner.start();
+
     let jobs = await getCityJob();
+
+    spinner.stop();
+
     jobs.forEach(j => {
         console.table(j);
     })
