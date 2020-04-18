@@ -46,7 +46,7 @@ async function getCityCode() {
 
 async function getKeywordJob(cityCode, keyword) {
 
-    let jobs = [];
+    let jobs = {};
     let page = 1;
     while (true) {
         let res = await axios.get("https://www.zhipin.com/mobile/jobs.json", {
@@ -68,14 +68,19 @@ async function getKeywordJob(cityCode, keyword) {
 
         const root = parse(code);
         for (let job of root.querySelectorAll("li.item")) {
-            jobs.push({
-                "职位名称": job.querySelector("div.title h4").text,
-                "职位链接": "https://www.zhipin.com" + job.querySelector("a").getAttribute("href"),
-                "公司名称": job.querySelector("div.name").text,
-                "薪资": job.querySelector("div.title .salary").text,
-                // "工作地点": job.querySelectorAll('div.msg em')[0].text,
-                "工作经验": job.querySelectorAll("div.msg em")[1].text,
-                // "学历要求": job.querySelectorAll("div.msg em")[2].text,
+            let experience = job.querySelectorAll("div.msg em")[1].text;
+            // Remove Part time job
+            if (!experience) {
+                continue
+            }
+            if (!jobs[experience]) {
+                jobs[experience] = []
+            }
+            jobs[experience].push({
+                "Title": job.querySelector("div.title h4").text,
+                "URL": "https://www.zhipin.com" + job.querySelector("a").getAttribute("href"),
+                "Company": job.querySelector("div.name").text,
+                "Salary": job.querySelector("div.title .salary").text,
             });
         }
 
@@ -92,8 +97,7 @@ async function getKeywordJob(cityCode, keyword) {
 async function getCityJob() {
     let cityCode = await getCityCode();
     let promises = process.env.QUERY_KEYWORD.split(",").map(k => getKeywordJob(cityCode, k));
-    let allJobs = await Promise.all(promises);
-    return allJobs;
+    return await Promise.all(promises);
 }
 
 async function wrapperSpinner(f) {
@@ -104,8 +108,15 @@ async function wrapperSpinner(f) {
 }
 
 (async function () {
-    let jobs = await wrapperSpinner(getCityJob);
-    jobs.forEach(j => {
-        console.table(j);
+    let allJobs = await wrapperSpinner(getCityJob);
+    allJobs.forEach(j => {
+        for (let ep of Object.keys(j).sort()) {
+            console.log(ep)
+            let jobs = j[ep];
+            jobs.sort((a, b) => {
+                return Number(a.Salary.split("-")[0]) - Number(b.Salary.split("-")[0])
+            })
+            console.table(jobs);
+        }
     })
 })();
